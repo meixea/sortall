@@ -63,6 +63,8 @@ public class Test {
         ass(i2.compareTo(18) < 0, "Bad comparing for less");
         ass(i2.compareTo(1) > 0, "Bad comparing for greater");
         ass(i2.compareTo(17) == 0, "Bad comparing for equal");
+        i1 = new IntegerObject(40);
+        ass(i2.compareTo(i1) < 0, "Bad comparing to IntegerObject");
     }
     static void test_StringObject(){
         System.out.println("------test StringObject------");
