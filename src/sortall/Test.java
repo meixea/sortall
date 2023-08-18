@@ -7,8 +7,9 @@ public class Test {
     public static void main(String[] args) {
         test_Comparators();
         test_InputFileReader();
-        test_IntegerReader();
-        test_Parameters();
+        test_IntegerObject();
+        test_StringObject();
+//        test_Parameters();
 
     }
     static void test_Comparators(){
@@ -35,27 +36,61 @@ public class Test {
             ass(false, e.getMessage());
         }
     }
-    static void test_IntegerReader(){
+    static void test_IntegerObject(){
         System.out.println("------test IntegerObject------");
-        IntegerObject reader = new IntegerObject();
-        reader.setFileReader(new InputFileReader("1\n20\nss\n54\n48\n49\n55\n60".getBytes()));
-        reader.setComparator(new AscendingComparator());
 
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        PrintStream oldOut = System.out;
-        System.setOut(new PrintStream(buffer));
+        IntegerObject i1 = new IntegerObject();
+        IntegerObject i2 = new IntegerObject(17);
 
-        while( true ){
-            Comparable value = reader.next();
-            if( value == null )
-                break;
-            ass(value instanceof Integer, "Integer not recognized");
-            System.out.print((Integer) value);
+        try{
+            i1.compareTo(i2);
+            ass(false, "comparing to null");
         }
+        catch( NullPointerException e ){}
 
-        System.setOut(oldOut);
-        String testString = "120File test has incorrect data. Skipped 1 line(s).\n54File test has unsorted values. Skipped 2 value(s).\n5560";
-        ass(buffer.toString().equals(testString), "values reading not correct.");
+        try{
+            i2.compareTo(i1);
+            ass(false, "comparing to null");
+        }
+        catch( NullPointerException e ){}
+
+        try{
+            i2.compareTo("11");
+            ass(false, "comparing with String");
+        }
+        catch( ClassCastException e ){}
+
+        ass(i2.compareTo(18) < 0, "Bad comparing for less");
+        ass(i2.compareTo(1) > 0, "Bad comparing for greater");
+        ass(i2.compareTo(17) == 0, "Bad comparing for equal");
+    }
+    static void test_StringObject(){
+        System.out.println("------test StringObject------");
+
+        StringObject s1 = new StringObject();
+        StringObject s2 = new StringObject("dddd");
+
+        try{
+            s1.compareTo(s2);
+            ass(false, "comparing to null");
+        }
+        catch( NullPointerException e ){}
+
+        try{
+            s2.compareTo(s1);
+            ass(false, "comparing to null");
+        }
+        catch( NullPointerException e ){}
+
+        try{
+            s2.compareTo(11);
+            ass(false, "comparing with int");
+        }
+        catch( ClassCastException e ){}
+
+        ass(s2.compareTo("tt") < 0, "Bad comparing for less");
+        ass(s2.compareTo("aa") > 0, "Bad comparing for greater");
+        ass(s2.compareTo("dddd") == 0, "Bad comparing for equal");
     }
     static void test_Parameters(){
         System.out.println("------test Parameters------");

@@ -5,6 +5,7 @@ import java.util.Comparator;
 
 class WrongFormatException extends RuntimeException{}
 public abstract class ValueObject implements Comparable {
+/*
     public T next(){
 
         if( this.fileReader == null ){
@@ -48,5 +49,6 @@ public abstract class ValueObject implements Comparable {
         this.currentValue = null;
         return null;
     }
+*/
     public abstract ValueObject parseValue(String string) throws WrongFormatException;
 }
