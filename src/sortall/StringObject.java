@@ -26,4 +26,7 @@ public class StringObject extends ValueObject {
 
         throw new ClassCastException("Error: StringObject compares with String only");
     }
+    public String toString(){
+        return value;
+    }
 }

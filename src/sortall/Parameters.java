@@ -1,8 +1,6 @@
 package sortall;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -15,9 +13,9 @@ public class Parameters implements AutoCloseable {
     protected Comparator<Comparable> comparator = new AscendingComparator();
     protected ValueObject valueObject = null;
     protected PrintStream outputStream = null;
-    protected List<String> inputFilenames = new ArrayList<>();
+    protected List<InputFileReader> inputReaders = new ArrayList<>();
     private Parameters(){}
-    public static Parameters parseParameters(String[] args) throws FileNotFoundException {
+    public static Parameters parseParameters(String[] args) {
 
         Parameters parameters = new Parameters();
         List<String> arguments = new ArrayList(Arrays.asList(args));
@@ -26,9 +24,16 @@ public class Parameters implements AutoCloseable {
         if( parameters.valueObject == null )
             throw new NoFormatOptionException();
 
-        parameters.extractOutputFilename(arguments);
+        try{
+            parameters.extractOutputStream(arguments);
+        }
+        catch( FileNotFoundException e ) {
+            throw new NoOutputFileException();
+        }
 
-        parameters.extractInputFilenames(arguments);
+        parameters.extractInputReaders(arguments);
+        if( parameters.inputReaders.size() == 0 )
+            throw new NoInputFilesException();
 
         return parameters;
     }
@@ -39,15 +44,24 @@ public class Parameters implements AutoCloseable {
                 System.out.println("Unknown option: " + option);
         }
     }
-    protected void extractOutputFilename(List<String> arguments) throws FileNotFoundException {
+    protected void extractOutputStream(List<String> arguments) throws FileNotFoundException {
         if(arguments.size() > 0) {
             String filename = arguments.remove(0);
             this.outputStream = new PrintStream(new FileOutputStream(filename));
         }
+        else
+            throw new FileNotFoundException();
     }
-    protected void extractInputFilenames(List<String> arguments){
-        this.inputFilenames.addAll(arguments);
-        arguments.clear();
+    protected void extractInputReaders(List<String> arguments){
+        while( arguments.size() > 0 ) {
+            String filename = arguments.remove(0);
+            try {
+                this.inputReaders.add(new SortedInputFileReader(filename, valueObject, this.comparator));
+            }
+            catch( FileNotFoundException e ){
+                System.out.printf("Can't open file %s. Skipping.", filename);
+            }
+        }
     }
     protected boolean recognizeOption(String option){
         switch( option ){
@@ -66,6 +80,12 @@ public class Parameters implements AutoCloseable {
         return false;
     }
     public void close(){
-
+        if( this.outputStream != null )
+            this.outputStream.close();
+        try {
+            for (InputFileReader i : inputReaders)
+                i.close();
+        }
+        catch( IOException e ){}
     }
 }

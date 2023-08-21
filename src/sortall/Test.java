@@ -6,10 +6,11 @@ import java.util.Comparator;
 public class Test {
     public static void main(String[] args) {
         test_Comparators();
-        test_InputFileReader();
         test_IntegerObject();
         test_StringObject();
-//        test_Parameters();
+        test_InputFileReader();
+        test_SortedInputFileReader();
+        test_Parameters();
 
     }
     static void test_Comparators(){
@@ -25,16 +26,6 @@ public class Test {
         ass(comp.compare("faaaaaaaaa", "bbbbbb") < 0, "Strings compare error");
         ass(comp.compare(Integer.valueOf(37), Integer.valueOf(50)) > 0, "Integers compare error");
         ass(comp.compare(Integer.valueOf(37), Integer.valueOf(0)) < 0, "Integers compare error");
-    }
-    static void test_InputFileReader(){
-        System.out.println("------test InputFileReader------");
-        try( InputFileReader reader = new InputFileReader("not_existing_file")){
-            ass(false, "Not existing file not recognized");
-        }
-        catch( FileNotFoundException e ){}
-        catch( IOException e ){
-            ass(false, e.getMessage());
-        }
     }
     static void test_IntegerObject(){
         System.out.println("------test IntegerObject------");
@@ -94,23 +85,117 @@ public class Test {
         ass(s2.compareTo("aa") > 0, "Bad comparing for greater");
         ass(s2.compareTo("dddd") == 0, "Bad comparing for equal");
     }
+    static void test_InputFileReader(){
+        System.out.println("------test InputFileReader------");
+        try( InputFileReader reader = new InputFileReader("not_existing_file", null)){
+            ass(false, "Not existing file not recognized");
+        }
+        catch( FileNotFoundException e ){}
+        catch( IOException e ){
+            ass(false, e.getMessage());
+        }
+
+        try( InputFileReader reader = new InputFileReader("test_in2.txt", new IntegerObject())){
+
+            String test_log = "182 wrong format values in file test_in2.txt skipped\n27";
+
+            PrintStream oldOut = System.out;
+            ByteArrayOutputStream testOut = new ByteArrayOutputStream();
+            System.setOut(new PrintStream(testOut));
+
+            while ( true ) {
+                ValueObject value = reader.getNextValue();
+                if( value == null )
+                    break;
+                System.out.print(value.toString());
+            }
+
+            System.setOut(oldOut);
+
+            ass(test_log.equals(testOut.toString()), "Test reading from test_in2.txt not working");
+        }
+        catch( FileNotFoundException e ){
+            ass(false, "can't open test input file");
+        }
+        catch( IOException e ){
+            ass(false, e.getMessage());
+        }
+    }
+    static void test_SortedInputFileReader(){
+        System.out.println("------test SortedInputFileReader------");
+        try( InputFileReader reader = new SortedInputFileReader("test_in4.txt", new IntegerObject(), new AscendingComparator())){
+
+            String test_log = "111 unsorted values in file test_in4.txt skipped\n1234893 unsorted values in file test_in4.txt skipped\n27";
+
+            PrintStream oldOut = System.out;
+            ByteArrayOutputStream testOut = new ByteArrayOutputStream();
+            System.setOut(new PrintStream(testOut));
+
+            while ( true ) {
+                ValueObject value = reader.getNextValue();
+                if( value == null )
+                    break;
+                System.out.print(value.toString());
+            }
+
+            System.setOut(oldOut);
+
+            ass(test_log.equals(testOut.toString()), "Test reading from test_in4.txt not working");
+        }
+        catch( FileNotFoundException e ){
+            ass(false, "can't open test input file");
+        }
+        catch( IOException e ){
+            ass(false, e.getMessage());
+        }
+    }
     static void test_Parameters(){
         System.out.println("------test Parameters------");
 
-        Parameters p = Parameters.parseParameters(new String[]{"-i", "-a", "out.txt"});
-        ass(p.comparator instanceof AscendingComparator, "AscendingComparator not assigned");
-        ass(p.reader instanceof IntegerObject, "IntegerObject not assigned");
-        ass((p.outputFilename != null) && (p.outputFilename.equals("out.txt")), "output filename not assigned");
-        ass(p.inputFilenames.size() == 0, "not existing input filenames");
+        try( Parameters p = Parameters.parseParameters(new String[]{"-a", "test_out.txt", "test_in1.txt"}) ){
+            ass(false, "Working with no format option");
+        }
+        catch( NoOutputFileException e ){
+            ass(false, "Can't create output file");
+        }
+        catch( NoFormatOptionException e ){}
 
-        p = Parameters.parseParameters(new String[]{"-d", "-s", "out.txt", "file1", "file2"});
-        ass(p.comparator instanceof DescendingComparator, "DescendingComparator not assigned");
-        ass(p.reader instanceof StringObject, "StringObject not assigned");
-        ass(p.inputFilenames.size() == 2, "input filenames not correct");
+        try( Parameters p = Parameters.parseParameters(new String[]{"-d", "-i", "test_out.txt", "test_in1.txt"}) ){
+            ass(p.comparator instanceof DescendingComparator, "Descending option not working");
+            ass(p.valueObject instanceof IntegerObject, "Integer format option not recognized");
+        }
+        catch( NoOutputFileException e ){
+            ass(false, "Can't create output file");
+        }
+        catch( NoFormatOptionException e ){
+            ass(false, "Integer format option not recognized");
+        }
 
-        p = Parameters.parseParameters(new String[]{"-s", "-d", "out.txt", "file1", "file2"});
-        ass(p.comparator instanceof DescendingComparator, "DescendingComparator not assigned");
-        ass(p.reader instanceof StringObject, "StringObject not assigned");
+        try( Parameters p = Parameters.parseParameters(new String[]{"-s", "-d", "test_out.txt", "test_in1.txt", "test_in2.txt", "test_in3.txt"}) ){
+            ass(p.comparator instanceof DescendingComparator, "Descending option not working");
+            ass(p.valueObject instanceof StringObject, "String format option not recognized");
+            ass(p.inputReaders.size() == 3, "Not all input files recognized");
+        }
+        catch( NoOutputFileException e ){
+            ass(false, "Can't create output file");
+        }
+        catch( NoFormatOptionException e ){
+            ass(false, "String format option not recognized");
+        }
+
+        try( Parameters p = Parameters.parseParameters(new String[]{"-s", "-d"}) ){
+            ass(false, "Absence of output file not recognized");
+        }
+        catch( NoOutputFileException e ){}
+
+        try( Parameters p = Parameters.parseParameters(new String[]{"-s", "-d", "test_out.txt"}) ){
+            ass(false, "Absence input files not recognized");
+        }
+        catch( NoOutputFileException e ){
+            ass(false, "Can't create output file");
+        }
+        catch( NoInputFilesException e ){}
+
 
     }
     static void ass(boolean condition, String message){

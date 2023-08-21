@@ -2,7 +2,17 @@ package sortall;
 
 public class Main {
     public static void main(String[] args) {
-//        Parameters p = Parameters.parseParameters(args);
-//        System.out.println(p.reader.fileReader);
+        try( Parameters p = Parameters.parseParameters(args) ){
+            new Sorter(p.inputReaders, p.outputStream, p.comparator).sort();
+        }
+        catch( NoFormatOptionException e ){
+            System.out.println("Specify the file format '-i' or '-s'");
+        }
+        catch( NoOutputFileException e ){
+            System.out.println("Specify correct output and input files");
+        }
+        catch( NoInputFilesException e ){
+            System.out.println("Specify correct input file(s)");
+        }
     }
 }

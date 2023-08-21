@@ -28,4 +28,10 @@ public class IntegerObject extends ValueObject {
 
         throw new ClassCastException("Error: IntegerObject compares with Integer only");
     }
+    @Override
+    public String toString(){
+        if(value != null)
+            return value.toString();
+        return null;
+    }
 }
